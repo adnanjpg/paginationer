@@ -63,6 +63,7 @@ class Paginationer extends StatefulWidget {
     this.loadOn,
     this.key,
     this.controller,
+    this.primary,
     // keep it this way for now, to not break anything.
     this.type = PaginationerType.ScrollBased,
   }) : assert(type == PaginationerType.ScrollBased
@@ -113,6 +114,8 @@ class Paginationer extends StatefulWidget {
   final Key? key;
 
   final PaginationerType type;
+
+  final bool? primary;
 
   @override
   State<Paginationer> createState() {
@@ -255,7 +258,7 @@ class _ScrollBased extends State<Paginationer> {
       // force if parent is a scrollable widget.
       shrinkWrap: widget.controller != null || widget.shrinkWrap,
       // assert(!(controller != null && primary == true)
-      primary: false,
+      primary: widget.primary ?? false,
       key: widget.key,
       itemCount: widgets.length,
       scrollDirection: widget.scrollDirection,
@@ -384,6 +387,7 @@ class _ItemBased extends State<Paginationer> {
       // force if parent is a scrollable widget.
       shrinkWrap: widget.controller != null || widget.shrinkWrap,
       key: widget.key,
+      primary: widget.primary,
       itemCount: widgets.length,
       scrollDirection: widget.scrollDirection,
       itemBuilder: (context, index) {
