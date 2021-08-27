@@ -63,6 +63,7 @@ class Paginationer extends StatefulWidget {
     this.loadOn,
     this.key,
     this.controller,
+    // keep it this way for now, to not break anything.
     this.type = PaginationerType.ScrollBased,
   }) : assert(type == PaginationerType.ScrollBased
             ? (loadOn == null || loadOn >= 0.0 && loadOn <= 1.0)
@@ -382,7 +383,6 @@ class _ItemBased extends State<Paginationer> {
       reverse: widget.reverse,
       // force if parent is a scrollable widget.
       shrinkWrap: widget.controller != null || widget.shrinkWrap,
-      primary: false,
       key: widget.key,
       itemCount: widgets.length,
       scrollDirection: widget.scrollDirection,
