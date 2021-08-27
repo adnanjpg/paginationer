@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'paginationer_type.dart';
+
+export 'paginationer_type.dart';
+
 /// The `emptyChildren` should be filled with
 /// widgets that you want to appear when
 /// there is not any data yet, or after
@@ -56,10 +60,13 @@ class Paginationer extends StatefulWidget {
     this.shrinkWrap = false,
     this.reverse = false,
     this.scrollDirection = Axis.vertical,
-    this.loadOn = 0.8,
+    this.loadOn,
     this.key,
     this.controller,
-  }) : assert(loadOn >= 0.0 && loadOn <= 1.0);
+    this.type = PaginationerType.ScrollBased,
+  }) : assert(type == PaginationerType.ScrollBased
+            ? (loadOn == null || loadOn >= 0.0 && loadOn <= 1.0)
+            : true);
 
   /// will be inserted to the tree when
   /// we start loading, and will be removed
@@ -84,12 +91,15 @@ class Paginationer extends StatefulWidget {
   final ScrollController? controller;
 
   /// {@template adam_flutter.paginationer.load_on}
+  /// if (type == PaginationerType.ScrollBased),
   /// the `loadOn` parameter indicates in what percentage
   /// of the screen the load will be triggered.
   /// {@endtemplate}
   ///
+  ///
+  /// the value should be
   /// between 0.0 and 1.0. default is 0.8.
-  final double loadOn;
+  final double? loadOn;
 
   /// wether to run the [future] methods,
   /// on reaching the scroll bound.
@@ -100,21 +110,30 @@ class Paginationer extends StatefulWidget {
   final bool shrinkWrap;
 
   final Key? key;
+
+  final PaginationerType type;
+
   @override
-  _PaginationerState createState() => _PaginationerState();
+  State<Paginationer> createState() {
+    if (type == PaginationerType.ScrollBased) {
+      return _ScrollBased();
+    } else {
+      return _ItemBased();
+    }
+  }
 }
 
-class _PaginationerState extends State<Paginationer> {
-  bool isNotEmpty(List? list) {
-    return list != null && list.length > 0;
-  }
+bool _isNotEmpty(List? list) {
+  return list != null && list.length > 0;
+}
 
+class _ScrollBased extends State<Paginationer> {
   bool get hasChildren {
-    return isNotEmpty(children);
+    return _isNotEmpty(children);
   }
 
   bool get hasInitialChildren {
-    return isNotEmpty(widget.initialWidgets);
+    return _isNotEmpty(widget.initialWidgets);
   }
 
   bool get allEmpty => !hasChildren && !hasInitialChildren;
@@ -144,7 +163,7 @@ class _PaginationerState extends State<Paginationer> {
 
     final futureResult = (await widget.future(currentPage));
 
-    if (isNotEmpty(futureResult)) {
+    if (_isNotEmpty(futureResult)) {
       children?.addAll(futureResult);
       currentPage++;
     } else {
@@ -165,7 +184,7 @@ class _PaginationerState extends State<Paginationer> {
     if (noMoreData == false && // if data is ended
             isLoading == false && // if currently loading other data
             (controller.offset >=
-                controller.position.maxScrollExtent * widget.loadOn)
+                controller.position.maxScrollExtent * (widget.loadOn ?? .8))
             // if we reached the `loadOn` percentage of the screen
             &&
             !controller.position.outOfRange // if we are not out of range
@@ -223,13 +242,13 @@ class _PaginationerState extends State<Paginationer> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget>? _e = allEmpty
+    final List<Widget>? widgets = allEmpty
         ? [Container()]
         : [
             if (hasInitialChildren) ...widget.initialWidgets!,
             if (hasChildren) ...children!,
           ];
-    if (_e == null) return Container();
+    if (widgets == null) return Container();
     return ListView.builder(
       reverse: widget.reverse,
       // force if parent is a scrollable widget.
@@ -237,13 +256,142 @@ class _PaginationerState extends State<Paginationer> {
       // assert(!(controller != null && primary == true)
       primary: false,
       key: widget.key,
-      itemCount: _e.length,
+      itemCount: widgets.length,
       scrollDirection: widget.scrollDirection,
-      itemBuilder: (context, d) {
-        return _e.elementAt(d);
+      itemBuilder: (context, index) {
+        return widgets.elementAt(index);
       },
       // do not have a controller if parent does.
       controller: widget.controller == null ? controller : null,
+    );
+  }
+}
+
+class _ItemBased extends State<Paginationer> {
+  bool get hasChildren {
+    return _isNotEmpty(children);
+  }
+
+  bool get hasInitialChildren {
+    return _isNotEmpty(widget.initialWidgets);
+  }
+
+  bool get allEmpty => !hasChildren && !hasInitialChildren;
+
+  bool isLoading = false;
+
+  late bool noMoreData;
+  late int currentPage;
+
+  List<Widget>? children = [];
+
+  // manages adding and removing loading widgets.
+  void load({required VoidCallback onEmpty}) async {
+    // add loading widgets to the tree
+    children?.addAll(widget.emptyChildren);
+
+    // save current widget list size,
+    // before adding more widgets.
+    // this will be used later to remove
+    // loading widgets.
+    final childrenSize = children!.length;
+
+    setSt();
+
+    isLoading = true;
+
+    final futureResult = (await widget.future(currentPage));
+
+    if (_isNotEmpty(futureResult)) {
+      children?.addAll(futureResult);
+      currentPage++;
+    } else {
+      onEmpty();
+    }
+
+    isLoading = false;
+
+    // remove loading widgets.
+    children?.removeRange(
+        childrenSize - (widget.emptyChildren.length), childrenSize);
+
+    setSt();
+  }
+
+  setSt() {
+    if (mounted) {
+      Future.microtask(
+        () {
+          setState(() {});
+        },
+      );
+    }
+  }
+
+  /// loads more data;
+  Future loadMore() async {
+    if (noMoreData == false && // if data is ended
+            isLoading == false // if currently loading other data
+
+        ) {
+      load(
+        onEmpty: () {
+          noMoreData = true;
+        },
+      );
+    }
+  }
+
+  /// initializes data for the first load;
+  initializeData() async {
+    load(
+      onEmpty: () {
+        if (!hasInitialChildren) {
+          children = null;
+        }
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    noMoreData = !widget.paginationed;
+
+    currentPage = 1;
+
+    if (hasInitialChildren) {
+      children = [];
+      currentPage++;
+    }
+
+    initializeData();
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget>? widgets = allEmpty
+        ? [Container()]
+        : [
+            if (hasInitialChildren) ...widget.initialWidgets!,
+            if (hasChildren) ...children!,
+          ];
+    if (widgets == null) return Container();
+    return ListView.builder(
+      reverse: widget.reverse,
+      // force if parent is a scrollable widget.
+      shrinkWrap: widget.controller != null || widget.shrinkWrap,
+      primary: false,
+      key: widget.key,
+      itemCount: widgets.length,
+      scrollDirection: widget.scrollDirection,
+      itemBuilder: (context, index) {
+        if (index == widgets.length - 1) {
+          loadMore();
+        }
+        return widgets.elementAt(index);
+      },
     );
   }
 }
