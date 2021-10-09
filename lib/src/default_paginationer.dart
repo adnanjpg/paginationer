@@ -157,7 +157,7 @@ class _ScrollBased extends State<Paginationer> {
     // before adding more widgets.
     // this will be used later to remove
     // loading widgets.
-    final childrenSize = children!.length;
+    final childrenSize = children?.length ?? 0;
 
     if (mounted) setState(() {});
 
@@ -296,7 +296,7 @@ class _ItemBased extends State<Paginationer> {
     // before adding more widgets.
     // this will be used later to remove
     // loading widgets.
-    final childrenSize = children!.length;
+    final childrenSize = children?.length ?? 0;
 
     setSt();
 
