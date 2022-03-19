@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paginationer/src/extensions.dart';
 import 'paginationer_type.dart';
 import 'default_paginationer.dart';
 
@@ -133,7 +134,7 @@ class _ScrollBased<T> extends State<StatelessPaginationer<T>> {
   Future<void> load({required VoidCallback onEmpty}) async {
     // add loading widgets to the tree
     additionalChildren = widget.emptyChildren;
-    if (mounted) setState(() {});
+    await safeSetState(() {});
 
     isLoading = true;
 
@@ -148,7 +149,7 @@ class _ScrollBased<T> extends State<StatelessPaginationer<T>> {
 
     additionalChildren = [];
 
-    if (mounted) setState(() {});
+    await safeSetState(() {});
   }
 
   /// loads more data;
@@ -282,7 +283,7 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
   Future<void> load({required VoidCallback onEmpty}) async {
     // add loading widgets to the tree
     additionalChildren = widget.emptyChildren;
-    if (mounted) setState(() {});
+    await safeSetState(() {});
 
     isLoading = true;
 
@@ -296,16 +297,6 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
     isLoading = false;
 
     additionalChildren = [];
-  }
-
-  setSt() {
-    if (mounted) {
-      Future.microtask(
-        () {
-          setState(() {});
-        },
-      );
-    }
   }
 
   /// loads more data;

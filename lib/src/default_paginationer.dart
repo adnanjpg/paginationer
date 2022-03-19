@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paginationer/src/extensions.dart';
 import 'paginationer_type.dart';
 
 ///
@@ -159,7 +160,7 @@ class _ScrollBased extends State<Paginationer> {
     // loading widgets.
     final childrenSize = children?.length ?? 0;
 
-    if (mounted) setState(() {});
+    await safeSetState(() {});
 
     isLoading = true;
 
@@ -178,7 +179,7 @@ class _ScrollBased extends State<Paginationer> {
     children?.removeRange(
         childrenSize - (widget.emptyChildren.length), childrenSize);
 
-    if (mounted) setState(() {});
+    await safeSetState(() {});
   }
 
   /// loads more data;
@@ -298,7 +299,7 @@ class _ItemBased extends State<Paginationer> {
     // loading widgets.
     final childrenSize = children?.length ?? 0;
 
-    setSt();
+    await safeSetState(() {});
 
     isLoading = true;
 
@@ -317,17 +318,7 @@ class _ItemBased extends State<Paginationer> {
     children?.removeRange(
         childrenSize - (widget.emptyChildren.length), childrenSize);
 
-    setSt();
-  }
-
-  setSt() {
-    if (mounted) {
-      Future.microtask(
-        () {
-          setState(() {});
-        },
-      );
-    }
+    await safeSetState(() {});
   }
 
   /// loads more data;
