@@ -297,6 +297,8 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
     isLoading = false;
 
     additionalChildren = [];
+
+    await safeSetState(() {});
   }
 
   /// loads more data;
