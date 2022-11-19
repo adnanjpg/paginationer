@@ -142,6 +142,7 @@ class _ScrollBased extends State<Paginationer> {
   bool get allEmpty => !hasChildren && !hasInitialChildren;
 
   bool isLoading = false;
+  bool hasLoadingItems = false;
 
   late bool noMoreData;
   late ScrollController controller;
@@ -151,14 +152,13 @@ class _ScrollBased extends State<Paginationer> {
 
   // manages adding and removing loading widgets.
   void load({required VoidCallback onEmpty}) async {
-    // add loading widgets to the tree
-    children?.addAll(widget.emptyChildren);
+    if (isLoading == true) return;
 
-    // save current widget list size,
-    // before adding more widgets.
-    // this will be used later to remove
-    // loading widgets.
-    final childrenSize = children?.length ?? 0;
+    if (!hasLoadingItems) {
+      // add loading widgets to the tree
+      children?.addAll(widget.emptyChildren);
+      hasLoadingItems = true;
+    }
 
     await safeSetState(() {});
 
@@ -166,18 +166,23 @@ class _ScrollBased extends State<Paginationer> {
 
     final futureResult = (await widget.future(currentPage));
 
+    isLoading = false;
+
+    if (children?.isNotEmpty == true && hasLoadingItems) {
+      // remove loading widgets.
+      children!.removeRange(
+        children!.length - widget.emptyChildren.length,
+        children!.length,
+      );
+      hasLoadingItems = false;
+    }
+
     if (_isNotEmpty(futureResult)) {
       children?.addAll(futureResult);
       currentPage++;
     } else {
       onEmpty();
     }
-
-    isLoading = false;
-
-    // remove loading widgets.
-    children?.removeRange(
-        childrenSize - (widget.emptyChildren.length), childrenSize);
 
     await safeSetState(() {});
   }
@@ -282,6 +287,7 @@ class _ItemBased extends State<Paginationer> {
   bool get allEmpty => !hasChildren && !hasInitialChildren;
 
   bool isLoading = false;
+  bool hasLoadingItems = false;
 
   late bool noMoreData;
   late int currentPage;
@@ -290,14 +296,13 @@ class _ItemBased extends State<Paginationer> {
 
   // manages adding and removing loading widgets.
   void load({required VoidCallback onEmpty}) async {
-    // add loading widgets to the tree
-    children?.addAll(widget.emptyChildren);
+    if (isLoading == true) return;
 
-    // save current widget list size,
-    // before adding more widgets.
-    // this will be used later to remove
-    // loading widgets.
-    final childrenSize = children?.length ?? 0;
+    if (!hasLoadingItems) {
+      // add loading widgets to the tree
+      children?.addAll(widget.emptyChildren);
+      hasLoadingItems = true;
+    }
 
     await safeSetState(() {});
 
@@ -305,18 +310,23 @@ class _ItemBased extends State<Paginationer> {
 
     final futureResult = (await widget.future(currentPage));
 
+    isLoading = false;
+
+    if (children?.isNotEmpty == true && hasLoadingItems) {
+      // remove loading widgets.
+      children!.removeRange(
+        children!.length - widget.emptyChildren.length,
+        children!.length,
+      );
+      hasLoadingItems = false;
+    }
+
     if (_isNotEmpty(futureResult)) {
       children?.addAll(futureResult);
       currentPage++;
     } else {
       onEmpty();
     }
-
-    isLoading = false;
-
-    // remove loading widgets.
-    children?.removeRange(
-        childrenSize - (widget.emptyChildren.length), childrenSize);
 
     await safeSetState(() {});
   }
