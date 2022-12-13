@@ -267,6 +267,7 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
   bool get allEmpty => !hasItems && !hasInitialChildren;
 
   bool isLoading = false;
+  bool get shouldLoadMore => !isLoading && !noMoreData;
 
   late bool noMoreData;
 
@@ -283,9 +284,8 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
   Future<void> load({required VoidCallback onEmpty}) async {
     // add loading widgets to the tree
     additionalChildren = widget.emptyChildren;
-    await safeSetState(() {});
-
     isLoading = true;
+    await safeSetState(() {});
 
     final future = await widget.future(currentPage);
     if (future) {
@@ -348,6 +348,8 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
     return _output;
   }
 
+  final fetchedFor = <int>{};
+
   @override
   Widget build(BuildContext context) {
     final widgets = [
@@ -367,7 +369,10 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
       itemCount: widgets.length,
       scrollDirection: widget.scrollDirection,
       itemBuilder: (context, index) {
-        if (index == widgets.length - 1) {
+        if (shouldLoadMore &&
+            index == widgets.length - 1 &&
+            !fetchedFor.contains(index)) {
+          fetchedFor.add(index);
           loadMore();
         }
         return widgets.elementAt(index);
