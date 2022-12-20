@@ -348,6 +348,8 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
     return _output;
   }
 
+  final runnedIndexes = <int>{};
+
   @override
   Widget build(BuildContext context) {
     final widgets = [
@@ -367,7 +369,8 @@ class _ItemBased<T> extends State<StatelessPaginationer<T>> {
       itemCount: widgets.length,
       scrollDirection: widget.scrollDirection,
       itemBuilder: (context, index) {
-        if (index == widgets.length - 1) {
+        if (index == widgets.length - 1 && !runnedIndexes.contains(index)) {
+          runnedIndexes.add(index);
           loadMore();
         }
         return widgets.elementAt(index);
