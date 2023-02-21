@@ -93,9 +93,9 @@ class StatelessPaginationer<T> extends StatefulWidget {
   @override
   State<StatelessPaginationer> createState() {
     if (type == PaginationerType.ScrollBased) {
-      return _ScrollBased();
+      return ScrollBased();
     } else {
-      return _ItemBased();
+      return ItemBased();
     }
   }
 }
@@ -104,7 +104,7 @@ bool _isNotEmpty(List? list) {
   return list != null && list.length > 0;
 }
 
-class _ScrollBased<T> extends State<StatelessPaginationer<T>> {
+class ScrollBased<T> extends State<StatelessPaginationer<T>> {
   List<T> get items => widget.items;
 
   bool get hasItems {
@@ -253,7 +253,7 @@ class _ScrollBased<T> extends State<StatelessPaginationer<T>> {
   }
 }
 
-class _ItemBased<T> extends State<StatelessPaginationer<T>> {
+class ItemBased<T> extends State<StatelessPaginationer<T>> {
   List<T> get items => widget.items;
 
   bool get hasItems {
